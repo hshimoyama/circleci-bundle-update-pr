@@ -8,11 +8,9 @@
 [license]: https://github.com/masutaka/circleci-bundle-update-pr/blob/master/LICENSE.txt
 [gem-link]: http://badge.fury.io/rb/circleci-bundle-update-pr
 
-`circleci-bundle-update-pr` is an automation script for continuous bundle update and for sending a pull request using [`Scheduling a Workflow of CircleCI 2.0`](https://circleci.com/docs/2.0/workflows/#scheduling-a-workflow).
+circleci-bundle-update-pr is an automation script for continuous bundle update and for sending a pull request via CircleCI [Nightly builds](https://circleci.com/docs/nightly-builds/).
 
-By requesting a nightly build to CircleCI with an environment variable configured in `circle.yml` or `.circleci/config.yml` to execute this script, bundle update is invoked, then commit changes and send a pull request to GitHub repository if there some changes exist.
-
-:bulb: [README.md for CircleCI 1.0 is here.](README-for-CircleCI-1.0.md)
+By requesting a nightly build to CircleCI with an environment variable configured in `circle.yml` to execute this script, bundle update is invoked, then commit changes and send a pull request to GitHub repository if there some changes exist.
 
 ## Installation
 
@@ -37,63 +35,58 @@ GitHub personal access token is required for sending pull requests to your repos
         * `ENTERPRISE_OCTOKIT_ACCESS_TOKEN` with your GitHub Enterprise personal access token
         * `ENTERPRISE_OCTOKIT_API_ENDPOINT` with your GitHub Enterprise api endpoint (e.g. https://www.example.com/api/v3)
 
+### Getting CircleCI API token
+
+CircleCI API token is required to trigger nightly builds.
+
+1. Go to your application's "Project Settings" -> "API Permissions"
+2. Select "Create Token" and create a new token with "All" scope and any label you like
+
 ### Configure circle.yml
 
-Configure your `circle.yml` or `.circleci/config.yml` to run `circleci-bundle-update-pr`, for example:
+Configure your `circle.yml` to run `circleci-bundle-update-pr` if `BUNDLE_UPDATE` environment variable is present, for example:
 
 ```yaml
-version: 2
-jobs:
-  build:
-    # snip
-  continuous_bundle_update:
-    docker:
-      - image: ruby:2.4.2-alpine
-    working_directory: /work
-    steps:
-      - run:
-          name: Install System Dependencies
-          command: |
-            # See also https://circleci.com/docs/2.0/custom-images/#adding-required-and-custom-tools-or-files
-            apk add --update --no-cache git openssh-client tar gzip ca-certificates \
-              tzdata
-            gem install -N bundler
-      - run:
-          name: Set timezone to Asia/Tokyo
-          command: cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-      - checkout
-      - restore_cache:
-          name: Restore bundler cache
-          keys:
-            - gems-{{ .Environment.COMMON_CACHE_KEY }}-{{ checksum "Gemfile.lock" }}
-            - gems-{{ .Environment.COMMON_CACHE_KEY }}-
-      - run:
-          name: Setup requirements for continuous bundle update
-          command: gem install -N circleci-bundle-update-pr
-      - deploy:
-          name: Continuous bundle update
-          command: circleci-bundle-update-pr <username> <email>
-
-workflows:
-  version: 2
-  build:
-    jobs:
-      - build:
-          # snip
-  nightly:
-    triggers:
-      - schedule:
-          cron: "00 10 * * 5"
-          filters:
-            branches:
-              only: master
-    jobs:
-      - continuous_bundle_update
+deployment:
+  production:
+    branch: master
+    commands:
+      - |
+        if [ "${BUNDLE_UPDATE}" ] ; then
+          gem update bundler -N
+          gem install circleci-bundle-update-pr -N
+          circleci-bundle-update-pr <username> <email>
+        fi
 ```
 
 NOTE: Please make sure you replace `<username>` and `<email>` with yours.
 
-`circleci-bundle-update-pr` regularly updates myself. See also [.circleci/config.yml](.circleci/config.yml).
+### Trigger nightly build API via curl
+
+The easiest way to start a nightly build is using curl. The below is a simple script to trigger a build.
+
+```bash
+_project=<username>/<reponame>
+_branch=master
+_circle_token=<ciecleci api token>
+
+trigger_build_url=https://circleci.com/api/v1/project/${_project}/tree/${_branch}?circle-token=${_circle_token}
+
+post_data='{ "build_parameters": { "BUNDLE_UPDATE": "true" } }'
+
+curl \
+  --header "Accept: application/json" \
+  --header "Content-Type: application/json" \
+  --data "${post_data}" \
+  --request POST ${trigger_build_url}
+```
+
+NOTE: Please do not forget to replace `<username>/<reponame>/<circleci api token>` with yours.
+
+
+### Trigger nightly build via ci-build-trigger (recommended)
+
+While you can trigger nightly builds by using whatever you want for sending requests to API, the most recommended way is to use "ci-build-trigger". Please see https://github.com/masutaka/ci-build-trigger for details.
 
 ## CLI command references
 
