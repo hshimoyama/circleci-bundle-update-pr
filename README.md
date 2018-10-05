@@ -1,18 +1,16 @@
 # Circleci::Bundle::Update::Pr
 
-[![Build Status](https://img.shields.io/circleci/project/masutaka/circleci-bundle-update-pr/master.svg?style=flat-square)][circleci]
+[![Build Status](https://img.shields.io/circleci/project/github/masutaka/circleci-bundle-update-pr/master.svg?logo=circieci&style=flat-square)][circleci]
 [![License](https://img.shields.io/github/license/masutaka/circleci-bundle-update-pr.svg?style=flat-square)][license]
-[![Gem](https://img.shields.io/gem/v/circleci-bundle-update-pr.svg?style=flat-square)][gem-link]
+[![Gem](https://img.shields.io/gem/v/circleci-bundle-update-pr.svg?logo=ruby&style=flat-square)][gem-link]
 
 [circleci]: https://circleci.com/gh/masutaka/circleci-bundle-update-pr
 [license]: https://github.com/masutaka/circleci-bundle-update-pr/blob/master/LICENSE.txt
 [gem-link]: http://badge.fury.io/rb/circleci-bundle-update-pr
 
-`circleci-bundle-update-pr` is an automation script for continuous bundle update and for sending a pull request using [`Scheduling a Workflow of CircleCI 2.0`](https://circleci.com/docs/2.0/workflows/#scheduling-a-workflow).
+`circleci-bundle-update-pr` is an automation script for continuous bundle update and for sending a pull request using [`Scheduling a Workflow of CircleCI`](https://circleci.com/docs/2.0/workflows/#scheduling-a-workflow).
 
 By requesting a nightly build to CircleCI with an environment variable configured in `circle.yml` or `.circleci/config.yml` to execute this script, bundle update is invoked, then commit changes and send a pull request to GitHub repository if there some changes exist.
-
-:bulb: [README.md for CircleCI 1.0 is here.](README-for-CircleCI-1.0.md)
 
 ## Installation
 
